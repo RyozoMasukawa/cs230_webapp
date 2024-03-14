@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Visualization Optimizer</title>
+<style>
+    .container {
+        width: 80%;
+        margin: 50px auto;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 20px;
+    }
+    .progress-bar {
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+    .progress {
+        height: 20px;
+        background-color: #007bff;
+        border-radius: 5px;
+    }
+    .progress-label {
+        margin-bottom: 5px;
+    }
+    .image-container {
+        width: 100%;
+        text-align: center;
+    }
+    .image-container img {
+        max-width: 100%;
+        max-height: 200px;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 0 4px 4px;
+    }
+
+    /* Create two equal columns that sits next to each other */
+    .column {
+        flex: 50%;
+        padding: 0 4px;
+    }
+
+    .column figure {
+        margin-top: 8px;
+        vertical-align: middle;
+    }
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .header {
+        background-color: #333;
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+    }
+    .sidebar {
+        width: 250px;
+        background-color: #f4f4f4;
+        padding: 20px;
+        float: left;
+    }
+    .content {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-gap: 20px;
+    }
+    .card {
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 20px;
+    }
+    .card-header {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .card-content {
+        line-height: 1.6;
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Graph Visualization Optimizer</h1>
+  
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" id="graphFileInput" name="graph_file">
+    <label for="c-value">Parameter C:</label>
+    <input type="range" id="c-value" name="C" min="0" max="20" value="1">
+    <label for="t-value">Parameter t:</label>
+    <input type="range" id="t-value" name="t" min="0" max="100" value="0.1" step="0.01">
+    <button type="submit">Submit</button>
+  </form>
+
+  <img src="bayesian.jpeg" style="width:20%;">
+</div>
+
+<div class="container">
+  <div>
+    <div class="progress-label">Parameter C: <span id="progress-c">1</span></div>
+    <div class="progress-bar">
+      <div class="progress" id="progress-bar-c" style="width: 5%;"></div>
+    </div>
+  </div>
+  <div>
+    <div class="progress-label">Parameter t: <span id="progress-t">0.1</span></div>
+    <div class="progress-bar">
+      <div class="progress" id="progress-bar-t" style="width: 1%;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <!-- Visualization cards will be dynamically updated after form submission -->
+</div>
+
+<script>
+  // Function to update progress bars
+  function updateProgressBar(value, range, progressBarId, valueId) {
+      var percentage = ((value - range[0]) / (range[1] - range[0])) * 100;
+      document.getElementById(progressBarId).style.width = percentage + '%';
+      document.getElementById(valueId).textContent = value;
+  }
+
+  // Function to handle form submission
+  document.getElementById('uploadForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent default form submission
+    
+    // Get form data
+    var formData = new FormData(this);
+
+    // Make API request
+    fetch('http://localhost:18843/api/graph-visualizations/', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Update progress bars
+      updateProgressBar(data.c, [0, 20], 'progress-bar-c', 'progress-c');
+      updateProgressBar(data.t, [0, 100], 'progress-bar-t', 'progress-t');
+
+      // Update visualization cards
+      var contentDiv = document.querySelector('.content');
+      contentDiv.innerHTML = ''; // Clear previous content
+      
+      // Create image elements for visualization
+      var image1 = document.createElement('img');
+      image1.src = data.image1_url;
+      image1.style.width = '50%'; // Adjust the width as needed
+      contentDiv.appendChild(image1);
+
+      var image2 = document.createElement('img');
+      image2.src = data.image2_url;
+      image2.style.width = '50%'; // Adjust the width as needed
+      contentDiv.appendChild(image2);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  });
+</script>
+</body>
+</html>

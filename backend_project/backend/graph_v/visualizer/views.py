@@ -1,0 +1,51 @@
+from django.http import HttpResponse
+from rest_framework import viewsets
+from rest_framework.response import Response
+from django.http import FileResponse
+from .models import GraphVisualization
+from .serializers import GraphVisionSerializer
+from django.shortcuts import render
+
+def my_view(request):
+    # Your view logic here
+    return render(request, 'graph_v/index.html')
+
+class GraphVisualizationViewSet(viewsets.ModelViewSet):
+    queryset = GraphVisualization.objects.all()
+    serializer_class = GraphVisionSerializer
+
+    def create(self, request, *args, **kwargs):
+        origin = request.META.get('HTTP_REFERER', None)
+
+        # Use the origin as needed
+        if origin:
+            print(f"Request originated from: {origin}")
+        else:
+            print("Request origin not available")
+        
+        # Extracting the file, C, and t from the request data
+        graph_file = request.FILES.get('graph_file')
+        c = request.data.get('C')
+        t = request.data.get('t')
+
+        # Create a new instance of GraphVisualization with the extracted data
+        instance = GraphVisualization(graph_file=graph_file, c=c, t=t)
+        instance.save()
+
+        # Serialize the created instance
+        serializer = self.get_serializer(instance)
+
+        # Response data
+        response_data = serializer.data
+
+        # Add image files to response as attachments
+        # Construct URLs for the static images
+        image1_url = request.build_absolute_uri('/images/bayesian.jpeg')
+        image2_url = request.build_absolute_uri('/images/output_b1.png')
+
+        response_data['image1_url'] = image1_url
+        response_data['image2_url'] = image2_url
+        response_data['c'] = c
+        response_data['t'] = t
+
+        return Response(response_data) 
